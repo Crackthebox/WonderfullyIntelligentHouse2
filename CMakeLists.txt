@@ -14,18 +14,35 @@ include(cmake/CompilerFlags.cmake)
 include(cmake/CopyHelper.cmake)
 
 ###############################################################################
-# external dependencies with find_package
+# external dependencies cu FetchContent (Auto-Download SFML pentru CI/GitHub)
 ###############################################################################
+include(FetchContent)
 
-# Cautam instalarea nativa de SFML (cea instalata cu pacman)
-find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+FetchContent_Declare(
+    SFML
+    GIT_REPOSITORY https://github.com/SFML/SFML.git
+    GIT_TAG        2.6.1
+)
+
+FetchContent_GetProperties(SFML)
+if(NOT sfml_POPULATED)
+    FetchContent_Populate(SFML)
+    
+    # Dezactivam modulele de care nu avem nevoie pentru o compilare mult mai rapida
+    set(SFML_BUILD_AUDIO FALSE CACHE BOOL "" FORCE)
+    set(SFML_BUILD_NETWORK FALSE CACHE BOOL "" FORCE)
+    set(SFML_BUILD_WINDOW TRUE CACHE BOOL "" FORCE)
+    set(SFML_BUILD_GRAPHICS TRUE CACHE BOOL "" FORCE)
+    
+    add_subdirectory(${sfml_SOURCE_DIR} ${sfml_BINARY_DIR})
+endif()
 ###############################################################################
 
 add_executable(${MAIN_EXECUTABLE_NAME}
     main.cpp
 )
 
-# MODIFICARE COMPLETĂ: Toate sursele .cpp din subfolderul src/, scrise exclusiv cu litere mici
+# Sursele tale .cpp
 target_sources(${MAIN_EXECUTABLE_NAME}
     PRIVATE
         src/patterns.cpp
@@ -43,8 +60,8 @@ target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE
     ext
 )
 
-# AICI LEGAM BIBLIOTECA GRAFICA DE PROIECTUL TAU
-target_link_libraries(${MAIN_EXECUTABLE_NAME} sfml-graphics sfml-window sfml-system)
+# Legam modulele SFML la executabilul tau (aceste targeturi sunt create de FetchContent)
+target_link_libraries(${MAIN_EXECUTABLE_NAME} PRIVATE sfml-graphics sfml-window sfml-system)
 ###############################################################################
 
 install(TARGETS ${MAIN_EXECUTABLE_NAME} DESTINATION ${DESTINATION_DIR})
