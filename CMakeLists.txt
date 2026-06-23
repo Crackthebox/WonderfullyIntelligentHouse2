@@ -30,18 +30,14 @@ FetchContent_Declare(
     GIT_TAG        2.6.1
 )
 
-FetchContent_GetProperties(SFML)
-if(NOT sfml_POPULATED)
-    FetchContent_Populate(SFML)
-    
-    # Dezactivăm modulele inutile pentru a accelera compilarea
-    set(SFML_BUILD_AUDIO FALSE CACHE BOOL "" FORCE)
-    set(SFML_BUILD_NETWORK FALSE CACHE BOOL "" FORCE)
-    set(SFML_BUILD_WINDOW TRUE CACHE BOOL "" FORCE)
-    set(SFML_BUILD_GRAPHICS TRUE CACHE BOOL "" FORCE)
-    
-    add_subdirectory(${sfml_SOURCE_DIR} ${sfml_BINARY_DIR})
-endif()
+# Dezactivăm modulele inutile înainte de a face pachetul disponibil, pentru a accelera compilarea
+set(SFML_BUILD_AUDIO FALSE CACHE BOOL "" FORCE)
+set(SFML_BUILD_NETWORK FALSE CACHE BOOL "" FORCE)
+set(SFML_BUILD_WINDOW TRUE CACHE BOOL "" FORCE)
+set(SFML_BUILD_GRAPHICS TRUE CACHE BOOL "" FORCE)
+
+# MODIFICARE CRITICĂ: Folosim MakeAvailable în loc de Populate pentru a fi compatibil cu CMake 3.31+
+FetchContent_MakeAvailable(SFML)
 ###############################################################################
 
 add_executable(${MAIN_EXECUTABLE_NAME}
