@@ -18,6 +18,12 @@ include(cmake/CopyHelper.cmake)
 ###############################################################################
 include(FetchContent)
 
+# 🔧 REPARAȚIE PENTRU MAC OS: 
+# Rezolvă eroarea "dispatch_block_t has not been declared" din SDK-ul macOS 14
+if(APPLE)
+    add_compile_options(-include dispatch/dispatch.h)
+endif()
+
 FetchContent_Declare(
     SFML
     GIT_REPOSITORY https://github.com/SFML/SFML.git
@@ -28,7 +34,7 @@ FetchContent_GetProperties(SFML)
 if(NOT sfml_POPULATED)
     FetchContent_Populate(SFML)
     
-    # Dezactivam modulele de care nu avem nevoie pentru o compilare mult mai rapida
+    # Dezactivăm modulele inutile pentru a accelera compilarea
     set(SFML_BUILD_AUDIO FALSE CACHE BOOL "" FORCE)
     set(SFML_BUILD_NETWORK FALSE CACHE BOOL "" FORCE)
     set(SFML_BUILD_WINDOW TRUE CACHE BOOL "" FORCE)
@@ -60,7 +66,7 @@ target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE
     ext
 )
 
-# Legam modulele SFML la executabilul tau (aceste targeturi sunt create de FetchContent)
+# Legăm modulele SFML la executabilul tău
 target_link_libraries(${MAIN_EXECUTABLE_NAME} PRIVATE sfml-graphics sfml-window sfml-system)
 ###############################################################################
 
