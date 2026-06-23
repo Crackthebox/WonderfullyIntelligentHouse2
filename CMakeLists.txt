@@ -18,12 +18,6 @@ include(cmake/CopyHelper.cmake)
 ###############################################################################
 include(FetchContent)
 
-# 🔧 REPARAȚIE PENTRU MAC OS: 
-# Rezolvă eroarea "dispatch_block_t has not been declared" din SDK-ul macOS 14
-if(APPLE)
-    add_compile_options(-include dispatch/dispatch.h)
-endif()
-
 FetchContent_Declare(
     SFML
     GIT_REPOSITORY https://github.com/SFML/SFML.git
@@ -36,8 +30,20 @@ set(SFML_BUILD_NETWORK FALSE CACHE BOOL "" FORCE)
 set(SFML_BUILD_WINDOW TRUE CACHE BOOL "" FORCE)
 set(SFML_BUILD_GRAPHICS TRUE CACHE BOOL "" FORCE)
 
-# MODIFICARE CRITICĂ: Folosim MakeAvailable în loc de Populate pentru a fi compatibil cu CMake 3.31+
+# MODIFICARE CRITICĂ PENTRU MACOS CI FIX:
+# Forțăm definirea extensiilor Darwin și injectăm blocul de dispatch direct în subproiectul SFML
+if(APPLE)
+    set(CMAKE_TARGET_DEFINITIONS ${CMAKE_TARGET_DEFINITIONS} _DARWIN_C_SOURCE)
+    add_compile_options(-include dispatch/dispatch.h)
+endif()
+
 FetchContent_MakeAvailable(SFML)
+
+# Soluție suplimentară de siguranță pentru structura modulară din SFML pe macOS:
+if(APPLE AND TARGET sfml-window)
+    target_compile_options(sfml-window PRIVATE -include dispatch/dispatch.h)
+    target_compile_definitions(sfml-window PRIVATE _DARWIN_C_SOURCE)
+endif()
 ###############################################################################
 
 add_executable(${MAIN_EXECUTABLE_NAME}
