@@ -30,19 +30,16 @@ set(SFML_BUILD_NETWORK FALSE CACHE BOOL "" FORCE)
 set(SFML_BUILD_WINDOW TRUE CACHE BOOL "" FORCE)
 set(SFML_BUILD_GRAPHICS TRUE CACHE BOOL "" FORCE)
 
-# MODIFICARE CRITICĂ PENTRU MACOS CI FIX:
-# Forțăm definirea extensiilor Darwin și injectăm blocul de dispatch direct în subproiectul SFML
-if(APPLE)
-    set(CMAKE_TARGET_DEFINITIONS ${CMAKE_TARGET_DEFINITIONS} _DARWIN_C_SOURCE)
-    add_compile_options(-include dispatch/dispatch.h)
-endif()
-
 FetchContent_MakeAvailable(SFML)
 
-# Soluție suplimentară de siguranță pentru structura modulară din SFML pe macOS:
+# 🔧 REPARAȚIE RADICALĂ PENTRU MACOS + GCC BUG (dispatch_block_t)
 if(APPLE AND TARGET sfml-window)
-    target_compile_options(sfml-window PRIVATE -include dispatch/dispatch.h)
-    target_compile_definitions(sfml-window PRIVATE _DARWIN_C_SOURCE)
+    # Definim dispatch_block_t direct ca un tip generic înaintea headerelor Apple IOKit 
+    # pentru ca compilatorul GCC să nu mai caute sintaxa de blocuri Apple (^) pe care nu o înțelege
+    target_compile_definitions(sfml-window PRIVATE 
+        _DARWIN_C_SOURCE
+        "dispatch_block_t=void*"
+    )
 endif()
 ###############################################################################
 
