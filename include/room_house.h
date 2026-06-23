@@ -4,8 +4,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "Devices.h"
-#include "Templates.h"
+#include "devices.h"
+#include "templates.h"
 
 class Thermostat {
 private:
