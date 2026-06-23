@@ -6,14 +6,12 @@ runs:
   steps:
     - name: Sanitizers
       shell: bash
-      # Rulam pe Linux si macOS (excluzand Windows)
       if: matrix.runs_asan == true && runner.os != 'Windows'
       run: |
         if [[ "${RUNNER_OS}" == "Linux" ]]; then
-          # Pe Linux headless simulam un ecran virtual in memorie cu xvfb-run
-          xvfb-run cat "${INPUT_FILENAME}" | tr -d '\r' | ./${{ env.ZIP_NAME }}/"${EXECUTABLE_NAME}"
+          # 🔧 REPARAȚIE: xvfb-run este mutat direct în fața executabilului tău
+          cat "${INPUT_FILENAME}" | tr -d '\r' | xvfb-run --auto-servernum ./${{ env.ZIP_NAME }}/"${EXECUTABLE_NAME}"
         else
-          # Pe macOS nu este nevoie de ecran virtual dedicat in CI
           cat "${INPUT_FILENAME}" | tr -d '\r' | ./${{ env.ZIP_NAME }}/"${EXECUTABLE_NAME}"
         fi
 
@@ -28,5 +26,5 @@ runs:
       shell: bash
       if: runner.os == 'Linux' && matrix.runs_valgrind == true
       run: |
-        # Invelim si rularea de Valgrind in xvfb-run pentru a evita crash-ul de display pe Linux
-        xvfb-run bash ./scripts/run_valgrind.sh "${{ env.ZIP_NAME }}"
+        # 🔧 REPARAȚIE: La fel și pentru Valgrind
+        cat "${INPUT_FILENAME}" | tr -d '\r' | xvfb-run --auto-servernum bash ./scripts/run_valgrind.sh "${{ env.ZIP_NAME }}"
