@@ -16,22 +16,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # Uncomment when using external dependencies, so they will be cached
-    # - name: Cache deps
-    #   # renovate: datasource=github-tags depName=actions/cache versioning=loose
-    #   uses: actions/cache@v5.0.3
-    #   id: cache-deps
-    #   # make the key depend on the dependency version
-    #   with:
-    #     path: |
-    #       ${{ env.BUILD_DIR }}/_deps
-    #     key: ${{ inputs.cache_key }}-${{ matrix.cmake_generator }}-${{ matrix.os }}-${{ matrix.cxx }}-${{ matrix.asan_name }}-${{ env.BUILD_TYPE }}
+    # Activat și securizat: Salvează folderele interne ale SFML (_deps) ca să nu recompileze la fiecare rulare
+    - name: Cache deps
+      uses: actions/cache@v5.0.3
+      id: cache-deps
+      with:
+        path: |
+          ${{ env.BUILD_DIR }}/_deps
+        key: ${{ inputs.cache_key }}-${{ matrix.cmake_generator || 'Default' }}-${{ matrix.os || 'Ubuntu' }}-${{ matrix.cxx || 'clang' }}-${{ matrix.asan_name || 'noasan' }}-${{ env.BUILD_TYPE }}
 
-    # NOTE: GH Actions does not allow updating the cache yet
-    # Using the workaround found here: https://github.com/actions/cache/issues/171
-    # Since this cache is small, it should not fill the cache too much
     - name: Cache Ninja deps
-      # renovate: datasource=github-tags depName=actions/cache versioning=loose
       uses: actions/cache@v5.0.3
       if: matrix.cmake_generator == 'Ninja'
       id: cache-deps-ninja
@@ -43,7 +37,6 @@ runs:
         restore-keys: ${{ matrix.os }}-${{ matrix.cxx }}-${{ matrix.asan_name }}-ninja-cache-
 
     - name: Cache MinGW
-      # renovate: datasource=github-tags depName=actions/cache versioning=loose
       uses: actions/cache@v5.0.3
       id: cache-mingw
       if: runner.os == 'Windows' && matrix.cxx == 'g++'
@@ -52,7 +45,6 @@ runs:
         key: ${{ runner.os }}-${{ env.MINGW_VER }}
 
     - name: Download toolchain (MinGW)
-      # renovate: datasource=github-tags depName=suisei-cn/actions-download-file versioning=loose
       uses: suisei-cn/actions-download-file@v1.6.1
       id: download-mingw-gcc
       if: runner.os == 'Windows' && matrix.cxx == 'g++' && steps.cache-mingw.outputs.cache-hit != 'true'
@@ -71,8 +63,6 @@ runs:
       if: runner.os == 'Windows' && matrix.cxx == 'g++'
       run: |
         PATH="$(pwd)/gcc/mingw64/bin:${PATH}"
-        # because GH Actions does not properly prepend to $PATH and still chooses VM gcc
-        # CMake generator not passed as option to script since it might not be defined
         export CMAKE_GENERATOR=${{ matrix.cmake_generator }}
         bash ./scripts/cmake.sh configure \
           -b ${{ env.BUILD_DIR }} \
@@ -92,6 +82,3 @@ runs:
           -e "-DPROJECT_WARNINGS_AS_ERRORS=${{ inputs.warnings_as_errors }} -DGITHUB_ACTIONS=${GITHUB_ACTIONS} ${{ inputs.custom_flags }}" \
           -i ${GITHUB_WORKSPACE}/artifacts \
           -s ${GITHUB_WORKSPACE}
-
-# https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
-# https://github.com/GuillaumeFalourd/poc-github-actions/blob/main/.github/workflows/36-local-action.yml

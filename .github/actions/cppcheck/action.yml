@@ -36,6 +36,13 @@ runs:
         cd cppcheck
         sudo cmake --install build
 
+    # 🔧 REPARAȚIE: Instalăm pachetele de grafică pentru serverul de Ubuntu înainte de Configure CMake
+    - name: Install SFML system dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsfml-dev
+
     - name: Configure CMake
       uses: ./.github/actions/configure-cmake
       with:
