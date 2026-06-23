@@ -30,16 +30,26 @@ set(SFML_BUILD_NETWORK FALSE CACHE BOOL "" FORCE)
 set(SFML_BUILD_WINDOW TRUE CACHE BOOL "" FORCE)
 set(SFML_BUILD_GRAPHICS TRUE CACHE BOOL "" FORCE)
 
+# 🔧 SEPARARE FIX MACOS: Clang vs GCC
+if(APPLE)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # Pentru Clang (Apple Clang/LLVM), includerea nativă a headerului este suficientă
+        add_compile_options(-include dispatch/dispatch.h)
+    else()
+        # Pentru GCC pe Mac (g++-13), ocolim lipsa suportului de Apple Blocks (^) prin void*
+        add_compile_definitions(_DARWIN_C_SOURCE "dispatch_block_t=void*")
+    endif()
+endif()
+
 FetchContent_MakeAvailable(SFML)
 
-# 🔧 REPARAȚIE RADICALĂ PENTRU MACOS + GCC BUG (dispatch_block_t)
+# Aplicare specifică pe modulul sfml-window ca să fim siguri că setările ajung în subproiect
 if(APPLE AND TARGET sfml-window)
-    # Definim dispatch_block_t direct ca un tip generic înaintea headerelor Apple IOKit 
-    # pentru ca compilatorul GCC să nu mai caute sintaxa de blocuri Apple (^) pe care nu o înțelege
-    target_compile_definitions(sfml-window PRIVATE 
-        _DARWIN_C_SOURCE
-        "dispatch_block_t=void*"
-    )
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(sfml-window PRIVATE -include dispatch/dispatch.h)
+    else()
+        target_compile_definitions(sfml-window PRIVATE _DARWIN_C_SOURCE "dispatch_block_t=void*")
+    endif()
 endif()
 ###############################################################################
 
