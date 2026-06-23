@@ -10,7 +10,7 @@ runs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build libsfml-dev
+        sudo apt-get install -y ninja-build libsfml-dev libudev-dev
 
     - name: Install valgrind
       shell: bash
